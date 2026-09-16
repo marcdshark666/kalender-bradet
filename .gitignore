@@ -3,3 +3,7 @@ node_modules/
 .env
 .env.local
 *.log
+
+.vercel
+tools/daglig-rek.log
+tools/daglig-rek.state.json

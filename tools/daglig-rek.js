@@ -51,25 +51,53 @@ const IDEER = [
   ['Handtag för Work List', 'Låt Work List-handen läsa kontots state ur datarepot och rapportera veckans händelser till Telegram på söndagar.', 3],
 ];
 
-function run(args) {
-  const r = spawnSync(process.execPath, [WORKLIST, ...args], { encoding: 'utf8', windowsHide: true, timeout: 60000 });
-  return { ok: r.status === 0, out: (r.stdout || '') + (r.stderr || '') };
+const LOGG = path.join(__dirname, 'daglig-rek.log');
+function logg(text) {
+  const rad = new Date().toISOString() + ' ' + text + '\n';
+  try { require('fs').appendFileSync(LOGG, rad); } catch { /* loggen är bara hjälp */ }
+  process.stdout.write(rad);
 }
+// Schemaläggaren ger en smalare PATH än ett vanligt skal; gh måste hittas för token.
+const GH_DIRS = ['C:\\Program Files\\GitHub CLI', path.join(process.env.LOCALAPPDATA || '', 'Programs', 'GitHub CLI')];
+function run(args) {
+  const env = { ...process.env, PATH: [process.env.PATH || '', ...GH_DIRS].join(';') };
+  const r = spawnSync(process.execPath, [WORKLIST, ...args], { encoding: 'utf8', windowsHide: true, timeout: 90000, env });
+  return { ok: r.status === 0, out: (r.stdout || '') + (r.stderr || '') + (r.error ? String(r.error) : '') };
+}
+// GitHub svarar 409 när filen hann ändras mellan läsning och skrivning (t.ex. den
+// dagliga skanningen kör samtidigt). Då väntar vi en stund och försöker igen.
+function runMedForsok(args, forsok) {
+  let w = null;
+  for (let i = 0; i < (forsok || 4); i++) {
+    w = run(args);
+    if (w.ok || !/409/.test(w.out)) return w;
+    logg(`GitHub 409 — försök ${i + 1} av ${forsok || 4}, väntar…`);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 4000 + Math.floor(Math.random() * 4000));
+  }
+  return w;
+}
+// En per dag, även om Rutin-Vakten eller en hand kör skriptet en gång till.
+const STATE = path.join(__dirname, 'daglig-rek.state.json');
+function lasState() { try { return JSON.parse(require('fs').readFileSync(STATE, 'utf8')); } catch { return {}; } }
 function main() {
   const a = process.argv.slice(2);
+  const idag = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' });
+  const st = lasState();
+  if (st.senast === idag && !a.includes('--alla') && !a.includes('--torr') && !a.includes('--igen')) { logg(`Redan skrivet i dag (${st.titel}). --igen tvingar.`); return; }
   const lista = run(['rek', '--lista']);
-  if (!lista.ok) { console.error('Kunde inte läsa Work List:', lista.out.trim()); process.exit(1); }
+  if (!lista.ok) { logg('Kunde inte läsa Work List: ' + lista.out.trim().slice(0, 300)); process.exit(1); }
   const finns = new Set();
   for (const rad of lista.out.split('\n')) if (rad.includes(PROJEKT)) for (const [titel] of IDEER) if (rad.includes(titel.slice(0, 40))) finns.add(titel);
   if (a.includes('--alla')) { for (const [titel, , grad] of IDEER) console.log(`${finns.has(titel) ? '✓' : ' '} ${grad}/5 ${titel}`); return; }
   const kvar = IDEER.filter(([t]) => !finns.has(t));
-  if (!kvar.length) { console.log('Alla idéer står redan på sajten — inget nytt i dag.'); return; }
+  if (!kvar.length) { logg('Alla idéer står redan på sajten — inget nytt i dag.'); return; }
   // dagnumret väljer, så samma dag ger samma förslag även om skriptet körs två gånger
   const dag = Math.floor(Date.now() / 86400000);
   const [titel, text, grad] = kvar[dag % kvar.length];
   if (a.includes('--torr')) { console.log(`${grad}/5  ${titel}\n${text}`); return; }
-  const w = run(['rek', '--projekt', PROJEKT, '--titel', titel, '--text', text, '--grad', String(grad), '--kalla', 'daglig-rek']);
-  console.log(w.out.trim());
+  const w = runMedForsok(['rek', '--projekt', PROJEKT, '--titel', titel, '--text', text, '--grad', String(grad), '--kalla', 'daglig-rek']);
+  logg((w.ok ? 'OK ' : 'FEL ') + w.out.trim().slice(0, 300));
+  if (w.ok) { try { require('fs').writeFileSync(STATE, JSON.stringify({ senast: idag, titel }, null, 1)); } catch { /* state är bara skydd mot dubbletter */ } }
   process.exit(w.ok ? 0 : 1);
 }
 main();
