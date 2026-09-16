@@ -1,0 +1,10 @@
+{
+  "name": "kalender-bradet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Din kalender som ett 3D-spelbräde: en bricka per dag, en figur som hoppar, poäng, konfetti och 65 länder.",
+  "scripts": {
+    "dev": "npx --yes serve -l 5300 .",
+    "rek": "node tools/daglig-rek.js"
+  }
+}
