@@ -29,6 +29,11 @@ någon och väntar — skriver du "läkare" står en läkare där, "gym" en löp
   läkarbesök, mest träning, längsta streak (dagar i rad med något inbokat), bästa
   månad, månad-för-månad-staplar och vilken sorts händelse året mest bestod av.
   Bläddra mellan år med ‹ och ›. Nyårsafton ger dubbel konfetti och 75 poäng.
+- **Flytta händelser med drag:** ta tag i figuren som står på en dag och dra den
+  till en annan bricka — händelsen följer med dit. Måldagen ringas in i gult medan
+  du drar, och en **Ångra**-knapp ligger kvar i sju sekunder efteråt. Står flera
+  händelser på dagen flyttas den översta (den figuren visar); en återkommande
+  händelse flyttas i alla år. Kort tryck på figuren öppnar dagens kort som förut.
 - **Dagens rekommendation:** 69 råd i rotation, ett nytt varje dag, i tipsraden
   och under 💡 Tips. Dessutom skriver en daglig rutin en ny förbättringsidé för
   appen till The Work List (Project Management-fliken).
@@ -70,4 +75,11 @@ räcker adressen.
 `←`/`→` en dag, `↑`/`↓` en vecka, `1`–`4` vy, `T` i dag, `Enter` dagens kort,
 `Å` årsstatistik, `Esc` stäng. Dra för att snurra kameran, scrolla/nyp för zoom. Klicka på en
 bricka för att hoppa dit, på en figur för att öppna dess händelse, på en
-månadsplatta i helhetsvyn för att zooma in på månaden.
+månadsplatta i helhetsvyn för att zooma in på månaden. **Dra i figuren** i stället
+för att klicka på den, så flyttar du händelsen till den bricka du släpper på.
+
+## Test
+
+`node tools/test-drag.js` kör drag-och-släpp mot en stubbad DOM och Three.js — 18
+kontroller av att rätt händelse flyttas, att Ångra lägger tillbaka den, att ett
+kort tryck fortfarande öppnar dagen och att START/BONUS inte tar emot händelser.
