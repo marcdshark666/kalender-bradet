@@ -1,9 +1,9 @@
 # Deploy väntar — koden är klar, men inte live
 
-**Senast uppdaterad:** 2026-09-17 09:26 (uppdrag #368, robots.txt)
+**Senast uppdaterad:** 2026-09-17 09:27 (uppdrag #367, hemskarmsikon)
 
 ## Läget
-Allt i `main` till och med commit `3130f01` (robots.txt) är **committat och
+Allt i `main` till och med commit `cdbb809` (hemskarmsikon) är **committat och
 pushat men inte utdeployat**. Live-sajten https://kalender-bradet.vercel.app kör
 fortfarande en ~1 dygn gammal version.
 
@@ -64,7 +64,15 @@ En enda lyckad deploy publicerar allt som står och väntar:
   för synk-endpointen, plus `sitemap.xml` med sajtens enda adress. Filerna finns
   i repot men svarar 404 live tills deployen går igenom.
 
+- **#367 hemskärmsikon** — `apple-touch-icon.png`, `manifest.webmanifest` och
+  `ikoner/` (192, 512, maskerbar 512), ritade av `tools/gor-ikoner.js`. Utan
+  deployen blir en genväg på mobilens hemskärm fortfarande en suddig skärmbild.
+
 Försök 2026-09-17 09:26 (hand 1, uppdrag #368): nekad, samma
-`api-deployments-free-per-day`. Nästa försök tidigast 15:26.
+`api-deployments-free-per-day`.
+Försök 2026-09-17 09:27 (hand 3, uppdrag #367): nekad, samma kod. De två
+försöken gick omedvetet om varandra — **två händer i samma projekt måste läsa
+den här filen precis före sitt försök**, inte när uppdraget börjar.
+Nästa försök tidigast 15:27, av EN hand.
 
 Se även minnesfilen `vercel-100-deploys-per-dygn`.
