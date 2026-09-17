@@ -1,6 +1,6 @@
 # Deploy väntar — koden är klar, men inte live
 
-**Senast uppdaterad:** 2026-09-17 09:31 (uppdrag #369, ljust/mörkt läge)
+**Senast uppdaterad:** 2026-09-17 16:02 (uppdrag #365, årsstatistik)
 
 ## Läget
 Allt i `main` till och med ljust/mörkt läge (#369) är **committat och
@@ -77,9 +77,14 @@ Försök 2026-09-17 09:26 (hand 1, uppdrag #368): nekad, samma
 Försök 2026-09-17 09:27 (hand 3, uppdrag #367): nekad, samma kod. De två
 försöken gick omedvetet om varandra — **två händer i samma projekt måste läsa
 den här filen precis före sitt försök**, inte när uppdraget börjar.
-Nästa försök tidigast 15:27, av EN hand.
 
 Hand 2 (uppdrag #369) läste filen 09:31 och **avstod från att försöka** — tredje
 försöket inom fem minuter är precis det bankande som håller fönstret stängt.
+
+Försök 2026-09-17 16:02 (hand 1, uppdrag #365): nekad, samma kod, trots att
+klockan passerat den tidigare satta gränsen 15:27. Taket rullar alltså inte av
+sig självt vid en fast klockslag — the-work-list fortsätter äta samma delade
+dygnskvot i realtid (se mätningen ovan: 12+6+2 deployer under de senaste 3 h
+kl 07:25). **Ny gräns: nästa försök tidigast 22:02** (sex timmar), av EN hand.
 
 Se även minnesfilen `vercel-100-deploys-per-dygn`.
