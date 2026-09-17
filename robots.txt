@@ -1,0 +1,12 @@
+# Kalenderbrädet — https://kalender-bradet.vercel.app
+#
+# Sajten är EN publik sida (index.html). Allt privat — konton, händelser, poäng —
+# ligger bakom e-post + PIN och hämtas bara via POST mot /api/sync; ingenting av
+# det har någonsin en egen adress att indexera. Därför: låt söktjänster indexera
+# framsidan, håll dem borta från API:et.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://kalender-bradet.vercel.app/sitemap.xml

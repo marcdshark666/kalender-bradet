@@ -50,6 +50,7 @@ någon och väntar — skriver du "läkare" står en läkare där, "gym" en löp
 | `js/three.min.js` | Three.js r158, självhostad (CSP tillåter ingen CDN) |
 | `api/sync.js` | Vercel-funktion: kontolagring i privat GitHub-repo (`GH_DATA_TOKEN`, `GH_DATA_REPO`) |
 | `tools/daglig-rek.js` | den dagliga rekommendationen till The Work List |
+| `robots.txt` / `sitemap.xml` | framsidan får indexeras, `/api/` inte; kontodata har ingen egen adress |
 
 ## Kör lokalt
 
