@@ -1,9 +1,9 @@
 # Deploy väntar — koden är klar, men inte live
 
-**Senast uppdaterad:** 2026-09-17 07:30 (uppdrag #365, Årsstatistik)
+**Senast uppdaterad:** 2026-09-17 09:26 (uppdrag #368, robots.txt)
 
 ## Läget
-Allt i `main` till och med commit `9d1ea8a` (Årsstatistik) är **committat och
+Allt i `main` till och med commit `3130f01` (robots.txt) är **committat och
 pushat men inte utdeployat**. Live-sajten https://kalender-bradet.vercel.app kör
 fortfarande en ~1 dygn gammal version.
 
@@ -12,6 +12,8 @@ Kontroller som visar det:
 ```sh
 curl -s https://kalender-bradet.vercel.app/ | grep -c 'openYear'          # ska bli >0
 curl -s https://kalender-bradet.vercel.app/js/app.js | grep -c -i 'nyårsafton'  # ska bli >0
+curl -s -o /dev/null -w '%{http_code}
+' https://kalender-bradet.vercel.app/robots.txt  # ska bli 200
 ```
 
 ## Varför
@@ -58,5 +60,11 @@ En enda lyckad deploy publicerar allt som står och väntar:
   månadsstaplar, typfördelning, årsbläddring med ‹ ›, samt konfetti + 75 poäng
   på nyårsafton (en gång per år).
 - **#366** Flytta händelse med drag (dokumentation och test).
+- **#368 robots.txt + sitemap.xml** — `Allow: /` för framsidan, `Disallow: /api/`
+  för synk-endpointen, plus `sitemap.xml` med sajtens enda adress. Filerna finns
+  i repot men svarar 404 live tills deployen går igenom.
+
+Försök 2026-09-17 09:26 (hand 1, uppdrag #368): nekad, samma
+`api-deployments-free-per-day`. Nästa försök tidigast 15:26.
 
 Se även minnesfilen `vercel-100-deploys-per-dygn`.
