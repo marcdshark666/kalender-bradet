@@ -20,11 +20,15 @@ någon och väntar — skriver du "läkare" står en läkare där, "gym" en löp
   med egen mark, himmel, träd/hus och ett landmärke: Eiffeltornet, Big Ben,
   pyramiderna, Torii-porten, Kristusstatyn, Taj Mahal, Operahuset …
 - **Poäng och streak:** +5 per dag du öppnar, +10 per ny dag figuren besöker,
-  +25 per avbockad händelse, +50 vid START, +30 på BONUS, +100 på födelsedagar.
+  +25 per avbockad händelse, +50 vid START, +30 på BONUS, +100 på födelsedagar, +75 på nyårsafton.
   Nivån stiger med kvadratroten av poängen.
 - **Konto med e-post (+ frivillig PIN) och serversynk** så mobilen och datorn visar
   samma bräde. Allt sparas alltid lokalt först. Export/import som JSON, import av
   `.ics` från Google/Outlook, "Mejla planen" för dagens kort.
+- **Årsstatistik (📊 Året, tangent Å):** en sida som räknar ihop hela året — flest
+  läkarbesök, mest träning, längsta streak (dagar i rad med något inbokat), bästa
+  månad, månad-för-månad-staplar och vilken sorts händelse året mest bestod av.
+  Bläddra mellan år med ‹ och ›. Nyårsafton ger dubbel konfetti och 75 poäng.
 - **Dagens rekommendation:** 69 råd i rotation, ett nytt varje dag, i tipsraden
   och under 💡 Tips. Dessutom skriver en daglig rutin en ny förbättringsidé för
   appen till The Work List (Project Management-fliken).
@@ -64,6 +68,6 @@ räcker adressen.
 ## Tangenter
 
 `←`/`→` en dag, `↑`/`↓` en vecka, `1`–`4` vy, `T` i dag, `Enter` dagens kort,
-`Esc` stäng. Dra för att snurra kameran, scrolla/nyp för zoom. Klicka på en
+`Å` årsstatistik, `Esc` stäng. Dra för att snurra kameran, scrolla/nyp för zoom. Klicka på en
 bricka för att hoppa dit, på en figur för att öppna dess händelse, på en
 månadsplatta i helhetsvyn för att zooma in på månaden.

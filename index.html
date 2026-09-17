@@ -87,10 +87,34 @@
   .stat b { display: block; font-size: 22px; color: var(--accent); }
   .tip { background: linear-gradient(135deg, rgba(255,209,102,0.16), rgba(255,93,143,0.12)); border: 1px solid rgba(255,209,102,0.35); border-radius: 12px; padding: 12px; margin: 8px 0; }
   .tip .n { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+  /* årsstatistik */
+  #yearNav { display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 4px; }
+  #yearNav #yearLabel { font-size: 20px; font-weight: 700; min-width: 76px; text-align: center; }
+  .rec { display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
+  .rec .ic { font-size: 26px; line-height: 1; width: 32px; text-align: center; flex: none; }
+  .rec .tx { flex: 1; min-width: 0; }
+  .rec .tx .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .rec .tx .v { font-weight: 700; }
+  .rec .tx .s { font-size: 12px; color: var(--muted); }
+  .rec.tom { opacity: .55; }
+  .yb { display: grid; grid-template-columns: 34px 1fr 34px; gap: 8px; align-items: center; margin: 5px 0; font-size: 12px; }
+  .yb .sp { background: rgba(0,0,0,0.25); border-radius: 6px; height: 12px; overflow: hidden; }
+  .yb .sp i { display: block; height: 100%; background: var(--accent); border-radius: 6px; min-width: 2px; }
+  .yb .sp i.noll { background: rgba(255,255,255,0.1); }
+  .yb .n { text-align: right; color: var(--muted); }
+  .yb.top .sp i { background: linear-gradient(90deg, #ffd166, #ff5d8f); }
+  .yb.top .m { color: var(--accent); font-weight: 700; }
   #toasts { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 20; pointer-events: none; }
   .toast { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; font-weight: 600; box-shadow: var(--shadow); animation: toast 2.6s forwards; }
   .toast.pts { color: var(--accent); }
   @keyframes toast { 0% { opacity: 0; transform: translateY(-8px) scale(.95); } 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-6px); } }
+  /* ångra-raden efter ett drag (js/drag.js) */
+  #dragUndo { position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 18px); display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 9px 12px 9px 16px; box-shadow: var(--shadow); z-index: 22; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; max-width: calc(100vw - 32px); }
+  #dragUndo.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  #dragUndo span { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dragUndo button { background: var(--accent); color: #17131f; border: 0; border-radius: 10px; padding: 7px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+  body.dragging { cursor: grabbing; }
+  body.dragging .drawer, body.dragging #dragUndo { pointer-events: none; }
   #splash { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 30%, #2b2b48, #0f0f1a); z-index: 50; transition: opacity .5s; }
   #splash .card { text-align: center; }
   #splash h1 { font-size: 34px; margin: 0 0 6px; }
@@ -147,6 +171,7 @@
   <button class="chip" id="openFigure">🧑‍🎤 Figur</button>
   <button class="chip" id="openEnv">🌍 Miljö</button>
   <button class="chip" id="openTips">💡 Tips</button>
+  <button class="chip" id="openYear" title="Årsstatistik (Å)">📊 Året</button>
   <button class="chip" id="openHelp">❓</button>
 </div>
 
@@ -237,15 +262,38 @@
   </div>
 </aside>
 
+<!-- Årsstatistik -->
+<aside class="drawer" id="yearDrawer">
+  <header><h2>Årsstatistik</h2><button class="icon" data-close>✕</button></header>
+  <div class="body">
+    <div id="yearNav">
+      <button class="icon" id="yearPrev" title="Föregående år">‹</button>
+      <div id="yearLabel">—</div>
+      <button class="icon" id="yearNext" title="Nästa år">›</button>
+    </div>
+    <p class="small" id="yearSub"></p>
+    <div class="stat" id="yearTotals"></div>
+    <h3>Rekord</h3>
+    <div id="yearRecords"></div>
+    <h3>Månad för månad</h3>
+    <div id="yearMonths"></div>
+    <h3>Vad året bestod av</h3>
+    <div id="yearTypes"></div>
+    <p class="small" id="yearFoot"></p>
+  </div>
+</aside>
+
 <!-- Hjälp -->
 <aside class="drawer" id="helpDrawer">
   <header><h2>Så funkar det</h2><button class="icon" data-close>✕</button></header>
   <div class="body">
     <p><b>Brädet.</b> Varje månad är ett bräde med en bricka per dag, som Monopol. Figuren hoppar dag för dag; klicka på en bricka så går den dit. START-hörnet ger månadsbonus, BONUS-brickan finns de månader ringen behöver en extra bricka.</p>
     <p><b>Händelser.</b> Öppna dagens kort och skriv vad som händer. Ordet i titeln avgör vem som ställer sig på brickan: "läkare" ger en läkare, "gym" en löpare, "flyg" en pilot.</p>
-    <p><b>Poäng.</b> +5 per dag du öppnar appen (streak), +10 första gången du besöker en dag, +25 per avbockad händelse, +50 när du passerar START, +30 på BONUS, +100 och konfetti på födelsedagar.</p>
+    <p><b>Flytta med drag.</b> Ta tag i figuren som står på en dag och dra den till en annan bricka — händelsen följer med dit. Måldagen ringas in i gult medan du drar, och efteråt ligger en <b>Ångra</b>-knapp nere i hörnet i sju sekunder. Står det flera händelser på dagen flyttas den översta (den som figuren visar). En återkommande händelse flyttas i alla år.</p>
+    <p><b>Poäng.</b> +5 per dag du öppnar appen (streak), +10 första gången du besöker en dag, +25 per avbockad händelse, +50 när du passerar START, +30 på BONUS, +100 och konfetti på födelsedagar, +75 och dubbel konfetti på nyårsafton.</p>
+    <p><b>Årsstatistik.</b> Knappen 📊 Året (eller <span class="kbd">Å</span>) räknar ihop hela året: flest läkarbesök, mest träning, längsta streak, bästa månad och vad året mest bestod av. Bläddra mellan åren med ‹ och ›.</p>
     <p><b>Vyer.</b> <span class="kbd">1</span> Ovan (karta), <span class="kbd">2</span> Perspektiv bakom figuren, <span class="kbd">3</span> Hela året, <span class="kbd">4</span> Lutande 25°. Dra för att snurra, scrolla eller nyp för zoom.</p>
-    <p><b>Tangenter.</b> <span class="kbd">←</span><span class="kbd">→</span> en dag, <span class="kbd">↑</span><span class="kbd">↓</span> en vecka, <span class="kbd">T</span> i dag, <span class="kbd">Enter</span> dagens kort. På mobil: svep snabbt åt vänster/höger.</p>
+    <p><b>Tangenter.</b> <span class="kbd">←</span><span class="kbd">→</span> en dag, <span class="kbd">↑</span><span class="kbd">↓</span> en vecka, <span class="kbd">T</span> i dag, <span class="kbd">Enter</span> dagens kort, <span class="kbd">Å</span> årsstatistik. På mobil: svep snabbt åt vänster/höger.</p>
     <p><b>Konto.</b> E-post + valfri PIN. Datan ligger i ett privat lager på servern och alltid lokalt i webbläsaren.</p>
     <p class="small">Byggd med Three.js. Källkod: <a href="https://github.com/marcdshark666/kalender-bradet" style="color:var(--accent)">github.com/marcdshark666/kalender-bradet</a></p>
   </div>
@@ -255,5 +303,6 @@
 <script src="js/data.js"></script>
 <script src="js/world.js"></script>
 <script src="js/app.js"></script>
+<script src="js/drag.js"></script>
 </body>
 </html>

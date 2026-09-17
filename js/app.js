@@ -12,7 +12,7 @@
   const defaults = () => ({
     version: 1, events: {}, arliga: [], arligaKlar: {},
     figur: defaultFigure(), miljo: { land: 'sverige', morkt: 'auto', rekvisita: true, lutning: 25, ljud: true },
-    poang: { total: 0, streak: 0, senastOppnad: null, besokta: {}, klara: 0, manad: {}, bonus: {}, fodelsedagar: {} },
+    poang: { total: 0, streak: 0, senastOppnad: null, besokta: {}, klara: 0, manad: {}, bonus: {}, fodelsedagar: {}, nyar: {} },
     konto: { email: '', pin: '' }, vy: 'lutande', updatedAt: 0,
   });
   let S = load();
@@ -51,6 +51,30 @@
     if (id.startsWith('r:')) { const rid = id.slice(2); S.arliga = S.arliga.filter((r) => r.id !== rid); for (const k of Object.keys(S.arligaKlar)) if (k.endsWith(':' + rid)) delete S.arligaKlar[k]; save(); refreshAllTiles(); return; }
     S.events[key] = (S.events[key] || []).filter((e) => e.id !== id); if (!S.events[key].length) delete S.events[key];
     save(); refreshTiles([key]);
+  }
+  // flyttar en händelse till en annan dag (js/drag.js drar figuren dit).
+  // Returnerar { titel, arligen, undo } eller null om den inte gick att flytta.
+  function moveEvent(fromKey, id, toKey) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(toKey) || fromKey === toKey) return null;
+    if (id.startsWith('r:')) {
+      const r = S.arliga.find((x) => x.id === id.slice(2)); if (!r) return null;
+      const fore = r.md; r.md = toKey.slice(5);
+      save(); refreshAllTiles();
+      return { titel: r.titel, arligen: true, undo: () => { r.md = fore; save(); refreshAllTiles(); } };
+    }
+    const lista = S.events[fromKey] || [], i = lista.findIndex((e) => e.id === id);
+    if (i < 0) return null;
+    const ev = lista[i];
+    lista.splice(i, 1); if (!lista.length) delete S.events[fromKey];
+    (S.events[toKey] = S.events[toKey] || []).push(ev);
+    save(); refreshTiles([fromKey, toKey]);
+    return { titel: ev.titel || 'Händelsen', arligen: false, undo: () => {
+      const efter = S.events[toKey] || [], j = efter.findIndex((e) => e.id === id);
+      if (j >= 0) efter.splice(j, 1);
+      if (!efter.length) delete S.events[toKey];
+      (S.events[fromKey] = S.events[fromKey] || []).splice(i, 0, ev);
+      save(); refreshTiles([fromKey, toKey]);
+    } };
   }
   function toggleEvent(key, id, klar) {
     if (id.startsWith('r:')) { const k = `${key.slice(0, 4)}:${id.slice(2)}`; if (klar) S.arligaKlar[k] = true; else delete S.arligaKlar[k]; }
@@ -112,6 +136,7 @@
       if (!S.poang.fodelsedagar[rec.key]) { S.poang.fodelsedagar[rec.key] = true; givePoints(100, '🎂 Födelsedag!'); changed = true; }
       else toast('🎂 Grattis igen!');
     }
+    if (arNyarsafton(rec.key)) firaNyar(rec.key, rec.pos);
     if (changed) save();
     world.setFocusMonth(rec.m);
   }
@@ -190,6 +215,7 @@
     else if (k === '1') setView('ovan'); else if (k === '2') setView('perspektiv'); else if (k === '3') setView('hela'); else if (k === '4') setView('lutande');
     else if (k === 't' || k === 'T') goTo(todayKey());
     else if (k === 'Enter') openDay();
+    else if (k === 'å' || k === 'Å') openYear(viewYear);
     else if (k === 'Escape') closeDrawers();
   });
   // svep på mobil: snabb horisontell rörelse = nästa/föregående dag
@@ -300,6 +326,173 @@
     $('#tipList').innerHTML = rows.join('') + `<p class="small">${n} råd i rotation. Fler idéer om appen skrivs upp automatiskt på <a href="https://the-work-list.vercel.app/projects" style="color:var(--accent)">The Work List</a>.</p>`;
   }
 
+  // ------------------------------------------------------------ årsstatistik
+  // Räknar året ur S.events + S.arliga + besökta dagar. Inget sparas: allt härleds vid öppning.
+  let statYear = new Date().getFullYear();
+
+  // Åren att bläddra mellan: de år som har egna händelser eller besökta dagar, plus i år.
+  // Årliga händelser finns i varje år och får därför inte styra listan (då blir den oändlig).
+  function statYears() {
+    const set = new Set([new Date().getFullYear()]);
+    for (const [k, l] of Object.entries(S.events)) if (l.length) set.add(Number(k.slice(0, 4)));
+    for (const k of Object.keys(S.poang.besokta)) set.add(Number(k.slice(0, 4)));
+    return [...set].filter((y) => y > 1900 && y < 3000).sort((a, b) => a - b);
+  }
+
+  // Längsta obrutna raden av dagar i året där har(key) är sann. Returnerar längd + sista dagen.
+  function langstaRaden(y, har) {
+    let bast = 0, cur = 0, slut = null, bastSlut = null;
+    for (let m = 0; m < 12; m++) {
+      for (let d = 1; d <= W.daysIn(y, m); d++) {
+        const k = W.keyOf(y, m, d);
+        if (har(k)) { cur++; slut = k; if (cur > bast) { bast = cur; bastSlut = slut; } }
+        else cur = 0;
+      }
+    }
+    return { langd: bast, slut: bastSlut };
+  }
+
+  function arsStat(y) {
+    const evs = eventsForYear(y);
+    const perTyp = {};                                    // typ-id → antal
+    const perManad = Array.from({ length: 12 }, () => ({ n: 0, klara: 0, typer: {} }));
+    let n = 0, klara = 0;
+    const dagarMedHandelse = new Set();
+    for (const [key, list] of Object.entries(evs)) {
+      if (!list.length) continue;
+      const m = Number(key.slice(5, 7)) - 1;
+      if (m < 0 || m > 11) continue;
+      dagarMedHandelse.add(key);
+      for (const e of list) {
+        const t = e.typ || 'ovrigt';
+        n++; perManad[m].n++; perTyp[t] = (perTyp[t] || 0) + 1;
+        perManad[m].typer[t] = (perManad[m].typer[t] || 0) + 1;
+        if (e.klar) { klara++; perManad[m].klara++; }
+      }
+    }
+    // toppmånad för en viss typ, så rekordkorten kan säga "flest i mars"
+    const toppManadFor = (typ) => {
+      let bm = -1, bn = 0;
+      for (let m = 0; m < 12; m++) { const v = perManad[m].typer[typ] || 0; if (v > bn) { bn = v; bm = m; } }
+      return bm < 0 ? null : { m: bm, n: bn };
+    };
+    let bastaManad = -1;
+    for (let m = 0; m < 12; m++) if (perManad[m].n > 0 && (bastaManad < 0 || perManad[m].n > perManad[bastaManad].n)) bastaManad = m;
+
+    const besokta = Object.keys(S.poang.besokta).filter((k) => k.startsWith(y + '-'));
+    const toppTyp = Object.entries(perTyp).sort((a, b) => b[1] - a[1])[0] || null;
+
+    return {
+      y, n, klara, perTyp, perManad, bastaManad, toppTyp, toppManadFor,
+      dagarMedHandelse: dagarMedHandelse.size,
+      besokta: besokta.length,
+      lakare: perTyp.lakare || 0,
+      traning: perTyp.traning || 0,
+      fodelsedagar: perTyp.fodelsedag || 0,
+      radHandelse: langstaRaden(y, (k) => dagarMedHandelse.has(k)),
+      radBesok: langstaRaden(y, (k) => !!S.poang.besokta[k]),
+    };
+  }
+
+  // "3 mars – 9 mars" ur sista dagen i raden och radens längd
+  function radText(rad) {
+    if (!rad.langd || !rad.slut) return '';
+    const [ys, ms, ds] = rad.slut.split('-').map(Number);
+    const slut = new Date(ys, ms - 1, ds);
+    const start = new Date(ys, ms - 1, ds - rad.langd + 1);
+    const f = (d) => `${d.getDate()} ${D.MANADER[d.getMonth()].toLowerCase()}`;
+    return rad.langd === 1 ? f(slut) : `${f(start)} – ${f(slut)}`;
+  }
+
+  const pl = (n, en, flera) => (n === 1 ? en : flera);
+  function recRad(ic, nyckel, varde, sub, tom) {
+    return `<div class="rec${tom ? ' tom' : ''}"><div class="ic">${ic}</div><div class="tx">` +
+      `<div class="k">${esc(nyckel)}</div><div class="v">${esc(varde)}</div>` +
+      (sub ? `<div class="s">${esc(sub)}</div>` : '') + '</div></div>';
+  }
+
+  function renderYear() {
+    const y = statYear, st = arsStat(y), ar = statYears();
+    const iAr = new Date().getFullYear();
+    $('#yearLabel').textContent = y;
+    $('#yearPrev').disabled = !ar.some((v) => v < y);
+    $('#yearNext').disabled = !ar.some((v) => v > y);
+    $('#yearSub').textContent = st.n
+      ? `${st.n} ${pl(st.n, 'händelse', 'händelser')} på ${st.dagarMedHandelse} ${pl(st.dagarMedHandelse, 'dag', 'dagar')}${y === iAr ? ' — året är inte slut än' : ''}.`
+      : `Inget registrerat för ${y} än. Skriv in händelser på dagens kort så fylls den här sidan i sig själv.`;
+    $('#yearTotals').innerHTML =
+      `<div><b>${st.n}</b>händelser</div><div><b>${st.klara}</b>avbockade</div><div><b>${st.besokta}</b>dagar besökta</div>`;
+
+    // rekord
+    const mn = (m) => D.MANADER[m];
+    const lm = st.toppManadFor('lakare'), tm = st.toppManadFor('traning');
+    const rec = [];
+    rec.push(recRad('🩺', 'Flest läkarbesök',
+      st.lakare ? `${st.lakare} besök` : 'Inga läkarbesök',
+      lm ? `Flest i ${mn(lm.m).toLowerCase()} (${lm.n})` : 'Skriv "läkare" i titeln så räknas det här', !st.lakare));
+    rec.push(recRad('🏋️', 'Mest träning',
+      st.traning ? `${st.traning} pass` : 'Inga träningspass',
+      tm ? `Bäst i ${mn(tm.m).toLowerCase()} (${tm.n} pass)` : 'Skriv "gym", "löpning" eller "yoga" så räknas det', !st.traning));
+    rec.push(recRad('🔥', 'Längsta streak',
+      st.radHandelse.langd ? `${st.radHandelse.langd} ${pl(st.radHandelse.langd, 'dag', 'dagar i rad')} med något inbokat` : 'Ingen rad än',
+      radText(st.radHandelse), !st.radHandelse.langd));
+    rec.push(recRad('👣', 'Längsta besöksrad',
+      st.radBesok.langd ? `${st.radBesok.langd} ${pl(st.radBesok.langd, 'dag', 'dagar i rad')} du varit på brädet` : 'Ingen rad än',
+      radText(st.radBesok), !st.radBesok.langd));
+    rec.push(recRad('🏆', 'Bästa månad',
+      st.bastaManad >= 0 ? `${mn(st.bastaManad)} — ${st.perManad[st.bastaManad].n} ${pl(st.perManad[st.bastaManad].n, 'händelse', 'händelser')}` : 'Ingen månad sticker ut',
+      st.bastaManad >= 0 ? `${st.perManad[st.bastaManad].klara} avbockade` : '', st.bastaManad < 0));
+    if (st.fodelsedagar) rec.push(recRad('🎂', 'Födelsedagar', `${st.fodelsedagar} i kalendern`, 'Varje besök ger konfetti och 100 poäng'));
+    $('#yearRecords').innerHTML = rec.join('');
+
+    // månad för månad
+    const max = Math.max(1, ...st.perManad.map((p) => p.n));
+    $('#yearMonths').innerHTML = st.perManad.map((p, m) =>
+      `<div class="yb${m === st.bastaManad && p.n ? ' top' : ''}"><div class="m">${mn(m).slice(0, 3)}</div>` +
+      `<div class="sp"><i class="${p.n ? '' : 'noll'}" style="width:${p.n ? Math.max(4, Math.round((p.n / max) * 100)) : 100}%"></i></div>` +
+      `<div class="n">${p.n}</div></div>`).join('');
+
+    // typfördelning, störst först
+    const typer = Object.entries(st.perTyp).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const tmax = Math.max(1, ...typer.map((t) => t[1]));
+    $('#yearTypes').innerHTML = typer.length
+      ? typer.map(([id, v]) => { const t = D.typAv(id); return `<div class="yb"><div class="m" title="${esc(t.namn)}">${t.emoji}</div>` +
+        `<div class="sp"><i style="width:${Math.max(4, Math.round((v / tmax) * 100))}%;background:${t.farg}"></i></div><div class="n">${v}</div></div>`; }).join('')
+      : '<p class="small">Inga händelser att fördela än.</p>';
+
+    $('#yearFoot').textContent = st.toppTyp
+      ? `Året handlade mest om: ${D.typAv(st.toppTyp[0]).namn.toLowerCase()} (${st.toppTyp[1]} av ${st.n}).`
+      : 'Siffrorna räknas om varje gång du öppnar sidan.';
+  }
+
+  function openYear(y) {
+    const ar = statYears();
+    if (typeof y === 'number') statYear = y;
+    else if (!ar.includes(statYear)) statYear = ar.includes(viewYear) ? viewYear : new Date().getFullYear();
+    renderYear(); openDrawer('yearDrawer');
+  }
+  function stepYear(dir) {
+    const ar = statYears();
+    const kandidater = dir > 0 ? ar.filter((v) => v > statYear) : ar.filter((v) => v < statYear).reverse();
+    if (!kandidater.length) return;
+    statYear = kandidater[0]; renderYear();
+  }
+  $('#openYear').addEventListener('click', () => openYear(viewYear));
+  $('#yearPrev').addEventListener('click', () => stepYear(-1));
+  $('#yearNext').addEventListener('click', () => stepYear(1));
+
+  // ------------------------------------------------------------ nyårsafton
+  const arNyarsafton = (key) => String(key || '').slice(5) === '12-31';
+  // Konfetti varje gång figuren står på 31 december; poängen bara en gång per år.
+  function firaNyar(key, pos) {
+    const p = (pos || world.figState.pos).clone();
+    world.confetti(p, 300); sound('confetti');
+    setTimeout(() => world.confetti(p, 220), 700);
+    const y = key.slice(0, 4);
+    if (!S.poang.nyar[y]) { S.poang.nyar[y] = true; givePoints(75, '🎆 Nyårsafton!'); save(); }
+    else toast('🎆 Gott nytt år!');
+  }
+
   // ------------------------------------------------------------ konto & synk
   let serverOk = null;
   function setSync(cls, text) { $('#syncDot').className = cls; $('#syncDot').title = text || ''; if ($('#accountDrawer').classList.contains('open')) $('#accStatus').textContent = text || ''; }
@@ -383,6 +576,8 @@
     catch (e) { console.error(e); $('#splash .card').innerHTML = `<h1>Hoppsan</h1><p>3D kunde inte startas: ${esc(e.message)}</p><p class="small">Prova en nyare webbläsare med WebGL.</p>`; return; }
     updateHud(); updateStats(); renderTipbar(); renderFigure(); renderEnv(); updateMonthLabel();
     dailyOpen();
+    // Öppnar man appen på nyårsafton smäller konfettin direkt, oavsett var figuren står.
+    if (arNyarsafton(todayKey())) setTimeout(() => firaNyar(todayKey()), 1600);
     checkServer().then(() => { if (S.konto.email && serverOk) pullServer(true); });
     // midnatt: flytta dagens ring
     setInterval(() => { const t = todayKey(); if (world.today !== t) { world.setToday(t); dailyOpen(); renderTipbar(); } }, 60000);
@@ -390,5 +585,5 @@
   }
   start();
   // felsökning i konsolen: KB_APP.world, KB_APP.state, KB_APP.goTo('2026-12-24')
-  window.KB_APP = { get world() { return world; }, get state() { return S; }, goTo, setView, addEvent, applyEnvironment, applyFigure };
+  window.KB_APP = { get world() { return world; }, get state() { return S; }, goTo, setView, addEvent, moveEvent, eventsOn, toast, sound, applyEnvironment, applyFigure };
 })();
