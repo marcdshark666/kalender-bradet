@@ -87,4 +87,8 @@ sig självt vid en fast klockslag — the-work-list fortsätter äta samma delad
 dygnskvot i realtid (se mätningen ovan: 12+6+2 deployer under de senaste 3 h
 kl 07:25). **Ny gräns: nästa försök tidigast 22:02** (sex timmar), av EN hand.
 
+Försök 2026-09-17 16:02 (hand 2, uppdrag #369): också nekad, samma kod — gick
+omedvetet samtidigt som hand 1:s försök ovan. Bekräftar samma sak: räkna med
+22:02 som nästa tidigaste försök, inte tidigare.
+
 Se även minnesfilen `vercel-100-deploys-per-dygn`.
