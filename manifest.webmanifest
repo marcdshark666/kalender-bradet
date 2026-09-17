@@ -1,0 +1,35 @@
+{
+  "name": "Kalenderbrädet",
+  "short_name": "Kalendern",
+  "description": "Din kalender som ett 3D-spelbräde: en bricka per dag, en figur som hoppar dag för dag, poäng, konfetti och 65 länder att bo i.",
+  "lang": "sv",
+  "dir": "ltr",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14141f",
+  "theme_color": "#1d1d2e",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    {
+      "src": "/ikoner/ikon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ikoner/ikon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ikoner/ikon-maskerbar-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
