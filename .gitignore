@@ -7,3 +7,4 @@ node_modules/
 .vercel
 tools/daglig-rek.log
 tools/daglig-rek.state.json
+tools/skott/

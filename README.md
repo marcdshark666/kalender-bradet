@@ -37,7 +37,10 @@ någon och väntar — skriver du "läkare" står en läkare där, "gym" en löp
 - **Dagens rekommendation:** 69 råd i rotation, ett nytt varje dag, i tipsraden
   och under 💡 Tips. Dessutom skriver en daglig rutin en ny förbättringsidé för
   appen till The Work List (Project Management-fliken).
-- Ljust/mörkt läge (auto efter klockan), ljud, mobilsvep, tangentbord.
+- Ljust/mörkt läge: följer telefonens `prefers-color-scheme` och gäller både 3D-världen
+  och panelerna. Ljus/Mörk under 🌍 Miljö slår systemet; saknar systemet inställning
+  avgör klockan (mörkt 19–06). Verifiera med `python tools/tema-test.py <url>`.
+- Ljud, mobilsvep, tangentbord.
 
 ## Filer
 

@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1d1d2e">
+<meta name="theme-color" id="tcMork" content="#1d1d2e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" id="tcLjus" content="#f1f1ec" media="(prefers-color-scheme: light)">
 <title>Kalenderbrädet</title>
 <meta name="description" content="Din kalender som ett 3D-spelbräde: en bricka per dag, en figur som hoppar dag för dag, poäng, konfetti och 65 länder att bo i.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='10' fill='%23ffd166'/%3E%3Crect x='14' y='14' width='16' height='16' fill='%231d1d2e'/%3E%3Crect x='34' y='14' width='16' height='16' fill='%23ff5d8f'/%3E%3Crect x='14' y='34' width='16' height='16' fill='%2306d6a0'/%3E%3Crect x='34' y='34' width='16' height='16' fill='%234361ee'/%3E%3C/svg%3E">
@@ -16,23 +17,67 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
+  /* Tema. Paletterna står en gång var; blocken under dem väljer vilken som gäller.
+     Utan JS bestämmer telefonens läge (prefers-color-scheme). Väljer man Ljus eller
+     Mörk under 🌍 Miljö sätter app.js data-tema på <html> och det valet vinner. */
   :root {
-    --bg: #14141f; --panel: rgba(22, 22, 36, 0.86); --panel-2: rgba(255,255,255,0.06); --line: rgba(255,255,255,0.12);
-    --text: #f4f2ee; --muted: #a9a6b8; --accent: #ffd166; --accent-2: #ff5d8f; --ok: #06d6a0; --warn: #ffb703; --bad: #ef476f;
-    --radius: 16px; --shadow: 0 10px 40px rgba(0,0,0,0.35);
+    /* mörk palett */
+    --m-bg: #14141f; --m-panel: rgba(22, 22, 36, 0.86); --m-panel-2: rgba(255,255,255,0.06); --m-line: rgba(255,255,255,0.12);
+    --m-text: #f4f2ee; --m-muted: #a9a6b8; --m-accent-text: #ffd166;
+    --m-field: rgba(0,0,0,0.3); --m-hover: rgba(255,255,255,0.12); --m-sank: rgba(0,0,0,0.2); --m-sank-2: rgba(0,0,0,0.25);
+    --m-tom: rgba(255,255,255,0.1); --m-kontur: #fff; --m-ring: rgba(255,255,255,0.08);
+    --m-shadow: 0 10px 40px rgba(0,0,0,0.35); --m-splash: radial-gradient(circle at 50% 30%, #2b2b48, #0f0f1a);
+    --m-tip-bg: linear-gradient(135deg, rgba(255,209,102,0.16), rgba(255,93,143,0.12)); --m-tip-line: rgba(255,209,102,0.35);
+
+    /* ljus palett */
+    --l-bg: #f1f1ec; --l-panel: rgba(255,255,255,0.88); --l-panel-2: rgba(0,0,0,0.05); --l-line: rgba(0,0,0,0.14);
+    --l-text: #1d1d2e; --l-muted: #5d5a6b; --l-accent-text: #8a5a00;
+    --l-field: rgba(255,255,255,0.92); --l-hover: rgba(0,0,0,0.08); --l-sank: rgba(0,0,0,0.05); --l-sank-2: rgba(0,0,0,0.09);
+    --l-tom: rgba(0,0,0,0.1); --l-kontur: #1d1d2e; --l-ring: rgba(0,0,0,0.1);
+    --l-shadow: 0 10px 30px rgba(0,0,0,0.14); --l-splash: radial-gradient(circle at 50% 30%, #ffffff, #dcdae6);
+    --l-tip-bg: linear-gradient(135deg, rgba(255,209,102,0.32), rgba(255,93,143,0.18)); --l-tip-line: rgba(176,125,0,0.4);
+
+    /* gemensamt: gult och signalfärgerna är ytfärger och ser lika ut i båda lägena */
+    --accent: #ffd166; --accent-2: #ff5d8f; --ok: #06d6a0; --warn: #ffb703; --bad: #ef476f;
+    --radius: 16px;
+
+    /* mörkt är grundläget */
+    --bg: var(--m-bg); --panel: var(--m-panel); --panel-2: var(--m-panel-2); --line: var(--m-line);
+    --text: var(--m-text); --muted: var(--m-muted); --accent-text: var(--m-accent-text);
+    --field: var(--m-field); --hover: var(--m-hover); --sank: var(--m-sank); --sank-2: var(--m-sank-2);
+    --tom: var(--m-tom); --kontur: var(--m-kontur); --ring: var(--m-ring);
+    --shadow: var(--m-shadow); --splash: var(--m-splash); --tip-bg: var(--m-tip-bg); --tip-line: var(--m-tip-line);
+  }
+  /* telefonen står i ljust läge och användaren har inte valt mörkt själv */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema="mork"]) {
+      --bg: var(--l-bg); --panel: var(--l-panel); --panel-2: var(--l-panel-2); --line: var(--l-line);
+      --text: var(--l-text); --muted: var(--l-muted); --accent-text: var(--l-accent-text);
+      --field: var(--l-field); --hover: var(--l-hover); --sank: var(--l-sank); --sank-2: var(--l-sank-2);
+      --tom: var(--l-tom); --kontur: var(--l-kontur); --ring: var(--l-ring);
+      --shadow: var(--l-shadow); --splash: var(--l-splash); --tip-bg: var(--l-tip-bg); --tip-line: var(--l-tip-line);
+    }
+  }
+  /* uttryckligt val i Miljö-panelen */
+  :root[data-tema="ljus"] {
+    --bg: var(--l-bg); --panel: var(--l-panel); --panel-2: var(--l-panel-2); --line: var(--l-line);
+    --text: var(--l-text); --muted: var(--l-muted); --accent-text: var(--l-accent-text);
+    --field: var(--l-field); --hover: var(--l-hover); --sank: var(--l-sank); --sank-2: var(--l-sank-2);
+    --tom: var(--l-tom); --kontur: var(--l-kontur); --ring: var(--l-ring);
+    --shadow: var(--l-shadow); --splash: var(--l-splash); --tip-bg: var(--l-tip-bg); --tip-line: var(--l-tip-line);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; overflow: hidden; }
   button, input, select, textarea { font: inherit; color: inherit; }
   button { cursor: pointer; border: 1px solid var(--line); background: var(--panel-2); border-radius: 12px; padding: 8px 12px; transition: background .15s, transform .1s; }
-  button:hover { background: rgba(255,255,255,0.12); }
+  button:hover { background: var(--hover); }
   button:active { transform: scale(0.97); }
   button.primary { background: var(--accent); color: #1d1d2e; border-color: transparent; font-weight: 600; }
   button.primary:hover { background: #ffdc86; }
   button.on { background: var(--accent); color: #1d1d2e; border-color: transparent; font-weight: 600; }
   button.icon { width: 40px; height: 40px; padding: 0; display: inline-grid; place-items: center; font-size: 18px; }
-  input, select, textarea { background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; }
-  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  input, select, textarea { background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-text); outline-offset: 1px; }
   label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; letter-spacing: .02em; text-transform: uppercase; }
   h2 { margin: 0 0 4px; font-size: 20px; }
   h3 { margin: 16px 0 6px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
@@ -45,14 +90,14 @@
   #top > * { pointer-events: auto; }
   .chip { display: inline-flex; align-items: center; gap: 8px; background: var(--panel); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 14px; padding: 6px 10px; box-shadow: var(--shadow); }
   .brand { font-weight: 700; letter-spacing: .01em; }
-  .brand span { color: var(--accent); }
+  .brand span { color: var(--accent-text); }
   #monthNav { gap: 4px; }
   #monthLabel { min-width: 150px; text-align: center; font-weight: 600; }
   #views button { padding: 6px 10px; border-radius: 10px; font-size: 13px; }
   #hud { margin-left: auto; gap: 14px; font-variant-numeric: tabular-nums; }
-  #hud b { color: var(--accent); font-size: 17px; }
+  #hud b { color: var(--accent-text); font-size: 17px; }
   #hud .sm { font-size: 12px; color: var(--muted); }
-  #syncDot { width: 10px; height: 10px; border-radius: 50%; background: #888; box-shadow: 0 0 0 3px rgba(255,255,255,0.08); }
+  #syncDot { width: 10px; height: 10px; border-radius: 50%; background: #888; box-shadow: 0 0 0 3px var(--ring); }
   #syncDot.ok { background: var(--ok); } #syncDot.local { background: var(--warn); } #syncDot.bad { background: var(--bad); } #syncDot.busy { background: #4cc9f0; animation: pulse 1s infinite; }
   @keyframes pulse { 50% { opacity: .4; } }
 
@@ -60,7 +105,7 @@
   #bottom { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); justify-content: center; pointer-events: none; z-index: 5; flex-wrap: wrap; }
   #bottom > * { pointer-events: auto; }
   #tipbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 64px; max-width: min(640px, 92vw); background: var(--panel); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 14px; padding: 8px 14px; font-size: 13px; display: flex; gap: 10px; align-items: center; z-index: 4; box-shadow: var(--shadow); }
-  #tipbar .t { color: var(--accent); font-weight: 600; white-space: nowrap; }
+  #tipbar .t { color: var(--accent-text); font-weight: 600; white-space: nowrap; }
   #tipbar button { padding: 2px 8px; font-size: 12px; }
 
   /* sidopanel */
@@ -76,13 +121,13 @@
   .grid button .e { font-size: 26px; }
   .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
   .swatches button { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
-  .swatches button.on { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+  .swatches button.on { border-color: var(--kontur); box-shadow: 0 0 0 2px var(--accent); }
   .pills { display: flex; flex-wrap: wrap; gap: 6px; }
   .pills button { padding: 5px 10px; font-size: 13px; border-radius: 999px; }
   .lands { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
   .lands button { display: flex; align-items: center; gap: 8px; padding: 6px 8px; font-size: 13px; text-align: left; }
   .flag { width: 22px; height: 15px; border-radius: 3px; flex: none; border: 1px solid rgba(0,0,0,0.3); }
-  .ev { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; background: rgba(0,0,0,0.18); }
+  .ev { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; background: var(--sank); }
   .ev .mark { width: 6px; align-self: stretch; border-radius: 3px; flex: none; }
   .ev .txt { flex: 1; min-width: 0; }
   .ev .txt b { display: block; }
@@ -91,14 +136,14 @@
   .ev .x { padding: 2px 8px; font-size: 12px; }
   .small { font-size: 12px; color: var(--muted); }
   .stat { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
-  .stat div { background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-align: center; }
-  .stat b { display: block; font-size: 22px; color: var(--accent); }
-  .tip { background: linear-gradient(135deg, rgba(255,209,102,0.16), rgba(255,93,143,0.12)); border: 1px solid rgba(255,209,102,0.35); border-radius: 12px; padding: 12px; margin: 8px 0; }
-  .tip .n { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+  .stat div { background: var(--sank); border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-align: center; }
+  .stat b { display: block; font-size: 22px; color: var(--accent-text); }
+  .tip { background: var(--tip-bg); border: 1px solid var(--tip-line); border-radius: 12px; padding: 12px; margin: 8px 0; }
+  .tip .n { font-size: 11px; color: var(--accent-text); text-transform: uppercase; letter-spacing: .06em; }
   /* årsstatistik */
   #yearNav { display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 4px; }
   #yearNav #yearLabel { font-size: 20px; font-weight: 700; min-width: 76px; text-align: center; }
-  .rec { display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
+  .rec { display: flex; gap: 12px; align-items: center; background: var(--sank); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
   .rec .ic { font-size: 26px; line-height: 1; width: 32px; text-align: center; flex: none; }
   .rec .tx { flex: 1; min-width: 0; }
   .rec .tx .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
@@ -106,15 +151,15 @@
   .rec .tx .s { font-size: 12px; color: var(--muted); }
   .rec.tom { opacity: .55; }
   .yb { display: grid; grid-template-columns: 34px 1fr 34px; gap: 8px; align-items: center; margin: 5px 0; font-size: 12px; }
-  .yb .sp { background: rgba(0,0,0,0.25); border-radius: 6px; height: 12px; overflow: hidden; }
+  .yb .sp { background: var(--sank-2); border-radius: 6px; height: 12px; overflow: hidden; }
   .yb .sp i { display: block; height: 100%; background: var(--accent); border-radius: 6px; min-width: 2px; }
-  .yb .sp i.noll { background: rgba(255,255,255,0.1); }
+  .yb .sp i.noll { background: var(--tom); }
   .yb .n { text-align: right; color: var(--muted); }
   .yb.top .sp i { background: linear-gradient(90deg, #ffd166, #ff5d8f); }
-  .yb.top .m { color: var(--accent); font-weight: 700; }
+  .yb.top .m { color: var(--accent-text); font-weight: 700; }
   #toasts { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 20; pointer-events: none; }
   .toast { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; font-weight: 600; box-shadow: var(--shadow); animation: toast 2.6s forwards; }
-  .toast.pts { color: var(--accent); }
+  .toast.pts { color: var(--accent-text); }
   @keyframes toast { 0% { opacity: 0; transform: translateY(-8px) scale(.95); } 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-6px); } }
   /* ångra-raden efter ett drag (js/drag.js) */
   #dragUndo { position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 18px); display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 9px 12px 9px 16px; box-shadow: var(--shadow); z-index: 22; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; max-width: calc(100vw - 32px); }
@@ -123,15 +168,30 @@
   #dragUndo button { background: var(--accent); color: #17131f; border: 0; border-radius: 10px; padding: 7px 14px; font: inherit; font-weight: 700; cursor: pointer; }
   body.dragging { cursor: grabbing; }
   body.dragging .drawer, body.dragging #dragUndo { pointer-events: none; }
-  #splash { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 30%, #2b2b48, #0f0f1a); z-index: 50; transition: opacity .5s; }
+  #splash { position: fixed; inset: 0; display: grid; place-items: center; background: var(--splash); z-index: 50; transition: opacity .5s; }
   #splash .card { text-align: center; }
   #splash h1 { font-size: 34px; margin: 0 0 6px; }
-  #splash h1 span { color: var(--accent); }
+  #splash h1 span { color: var(--accent-text); }
   #splash.hide { opacity: 0; pointer-events: none; }
-  .bar { height: 6px; width: 220px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 14px auto 0; }
+  /* Reservutgång när brädet aldrig kommer upp. Båda fallen nedan är ren CSS med
+     flit: CSP tillåter inget inline-script (script-src 'self'), och ett fel som
+     beror på att en scriptfil inte kom fram kan inte förklaras av en scriptfil.
+     Splashen ligger kvar tills app.js sätter .hide — händer det aldrig tonas
+     "tar längre tid än vanligt" in efter 12 sekunder med en väg tillbaka. */
+  #splash .stall { opacity: 0; margin-top: 20px; animation: stall .6s ease 12s forwards; }
+  #splash.hide .stall { animation: none; }
+  @keyframes stall { to { opacity: 1; } }
+  #splash .stall p { margin: 0 0 10px; }
+  .knapplank { display: inline-block; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); border-radius: 12px; padding: 8px 14px; text-decoration: none; font-weight: 600; }
+  .knapplank:hover { background: var(--hover); }
+  #nojs { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: var(--splash); padding: 24px; text-align: center; }
+  #nojs h1 { font-size: 28px; margin: 0 0 10px; }
+  #nojs h1 span { color: var(--accent-text); }
+  #nojs p { margin: 0 auto 10px; max-width: 32em; }
+  .bar { height: 6px; width: 220px; background: var(--tom); border-radius: 3px; overflow: hidden; margin: 14px auto 0; }
   .bar i { display: block; height: 100%; width: 40%; background: var(--accent); animation: load 1s infinite alternate; }
   @keyframes load { to { transform: translateX(150%); } }
-  .kbd { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; font-size: 12px; background: rgba(0,0,0,0.25); }
+  .kbd { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; font-size: 12px; background: var(--sank-2); }
   #dayHint { position: fixed; left: 12px; bottom: 64px; z-index: 4; max-width: 300px; font-size: 13px; }
   #dayHint .chip { display: block; }
   @media (max-width: 720px) {
@@ -147,7 +207,20 @@
 <body>
 <canvas id="scene"></canvas>
 
-<div id="splash"><div class="card"><h1>Kalender<span>brädet</span></h1><p class="muted">Bygger brädet, klär figuren, hissar flaggan …</p><div class="bar"><i></i></div></div></div>
+<div id="splash"><div class="card"><h1>Kalender<span>brädet</span></h1><p class="muted">Bygger brädet, klär figuren, hissar flaggan …</p><div class="bar"><i></i></div>
+  <div class="stall">
+    <p class="muted">Det här tar längre tid än vanligt. Något på vägen hit kom kanske aldrig fram.</p>
+    <a class="knapplank" href="./">Försök igen</a>
+  </div>
+</div></div>
+
+<noscript>
+  <div id="nojs"><div>
+    <h1>Kalender<span>brädet</span></h1>
+    <p>Brädet ritas med JavaScript, och just nu är JavaScript avstängt i webbläsaren.</p>
+    <p class="muted">Slå på JavaScript för den här sidan, eller öppna den i en annan webbläsare, så byggs kalendern upp igen. Inget som är sparat har gått förlorat.</p>
+  </div></div>
+</noscript>
 
 <div id="top">
   <div class="chip brand">Kalender<span>brädet</span></div>
@@ -232,7 +305,7 @@
     <input id="landSearch" placeholder="Sök land …" autocomplete="off" style="margin:8px 0">
     <div class="lands" id="landGrid"></div>
     <h3>Ljus</h3>
-    <div class="pills" id="darkMode"><button data-v="auto">Auto (kväll = mörkt)</button><button data-v="ljus">Ljus</button><button data-v="mork">Mörk</button></div>
+    <div class="pills" id="darkMode"><button data-v="auto" title="Följer telefonens ljusa/mörka läge, annars klockan">Auto (följer telefonen)</button><button data-v="ljus">Ljus</button><button data-v="mork">Mörk</button></div>
     <h3>Lutning i lutande vyn: <span id="tiltVal">25</span>°</h3>
     <input type="range" id="tilt" min="12" max="70" value="25">
     <h3>Prestanda</h3>
@@ -300,10 +373,11 @@
     <p><b>Flytta med drag.</b> Ta tag i figuren som står på en dag och dra den till en annan bricka — händelsen följer med dit. Måldagen ringas in i gult medan du drar, och efteråt ligger en <b>Ångra</b>-knapp nere i hörnet i sju sekunder. Står det flera händelser på dagen flyttas den översta (den som figuren visar). En återkommande händelse flyttas i alla år.</p>
     <p><b>Poäng.</b> +5 per dag du öppnar appen (streak), +10 första gången du besöker en dag, +25 per avbockad händelse, +50 när du passerar START, +30 på BONUS, +100 och konfetti på födelsedagar, +75 och dubbel konfetti på nyårsafton.</p>
     <p><b>Årsstatistik.</b> Knappen 📊 Året (eller <span class="kbd">Å</span>) räknar ihop hela året: flest läkarbesök, mest träning, längsta streak, bästa månad och vad året mest bestod av. Bläddra mellan åren med ‹ och ›.</p>
+    <p><b>Ljust och mörkt.</b> Appen följer telefonens läge — står mobilen i mörkt läge blir både brädet och panelerna mörka, i ljust läge blir de ljusa. Vill du bestämma själv finns Ljus och Mörk under 🌍 Miljö, och då gäller ditt val. Har telefonen ingen inställning avgör klockan: mörkt efter 19, ljust från 06.</p>
     <p><b>Vyer.</b> <span class="kbd">1</span> Ovan (karta), <span class="kbd">2</span> Perspektiv bakom figuren, <span class="kbd">3</span> Hela året, <span class="kbd">4</span> Lutande 25°. Dra för att snurra, scrolla eller nyp för zoom.</p>
     <p><b>Tangenter.</b> <span class="kbd">←</span><span class="kbd">→</span> en dag, <span class="kbd">↑</span><span class="kbd">↓</span> en vecka, <span class="kbd">T</span> i dag, <span class="kbd">Enter</span> dagens kort, <span class="kbd">Å</span> årsstatistik. På mobil: svep snabbt åt vänster/höger.</p>
     <p><b>Konto.</b> E-post + valfri PIN. Datan ligger i ett privat lager på servern och alltid lokalt i webbläsaren.</p>
-    <p class="small">Byggd med Three.js. Källkod: <a href="https://github.com/marcdshark666/kalender-bradet" style="color:var(--accent)">github.com/marcdshark666/kalender-bradet</a></p>
+    <p class="small">Byggd med Three.js. Källkod: <a href="https://github.com/marcdshark666/kalender-bradet" style="color:var(--accent-text)">github.com/marcdshark666/kalender-bradet</a></p>
   </div>
 </aside>
 

@@ -298,8 +298,43 @@
   $('#figSearch').addEventListener('input', renderFigure);
 
   // ------------------------------------------------------------ miljön
-  function isDark() { const m = S.miljo.morkt; if (m === 'mork') return true; if (m === 'ljus') return false; const h = new Date().getHours(); return h >= 19 || h < 6; }
-  function applyEnvironment() { world.setEnvironment(S.miljo.land, { dark: isDark(), rekvisita: S.miljo.rekvisita !== false }); }
+  // Auto betyder i första hand "som telefonen står". Bara när systemet saknar
+  // inställning (äldre webbläsare, no-preference) faller vi tillbaka på klockan.
+  function systemTema() {
+    if (!window.matchMedia) return null;
+    if (matchMedia('(prefers-color-scheme: dark)').matches) return 'mork';
+    if (matchMedia('(prefers-color-scheme: light)').matches) return 'ljus';
+    return null;
+  }
+  function isDark() {
+    const m = S.miljo.morkt;
+    if (m === 'mork') return true;
+    if (m === 'ljus') return false;
+    const sys = systemTema();
+    if (sys) return sys === 'mork';
+    const h = new Date().getHours();
+    return h >= 19 || h < 6;
+  }
+  // Panelerna ska aldrig lysa vitt medan brädet är mörkt, eller tvärtom: samma
+  // beslut styr både 3D-världen och CSS-variablerna i index.html.
+  function applyTheme(dark) {
+    document.documentElement.dataset.tema = dark ? 'mork' : 'ljus';
+    const mork = $('#tcMork');
+    const ljus = $('#tcLjus');
+    if (mork && ljus) { mork.media = dark ? 'all' : 'not all'; ljus.media = dark ? 'not all' : 'all'; }
+  }
+  function applyEnvironment() {
+    const dark = isDark();
+    applyTheme(dark);
+    world.setEnvironment(S.miljo.land, { dark: dark, rekvisita: S.miljo.rekvisita !== false });
+  }
+  // Byter telefonen läge medan appen är öppen ska brädet följa med direkt.
+  if (window.matchMedia) {
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    const lyssna = () => { if (world && (S.miljo.morkt || 'auto') === 'auto') applyEnvironment(); };
+    if (mq.addEventListener) mq.addEventListener('change', lyssna);
+    else if (mq.addListener) mq.addListener(lyssna);
+  }
   function flagCss(f) { const r = f.r; if (f.typ === 'v') return `linear-gradient(90deg, ${r.map((c, i) => `${c} ${(i / r.length) * 100}% ${((i + 1) / r.length) * 100}%`).join(', ')})`; if (f.typ === 'kors') return `linear-gradient(${r[0]}, ${r[0]}), linear-gradient(90deg, transparent 30%, ${r[1]} 30% 50%, transparent 50%), linear-gradient(transparent 40%, ${r[1]} 40% 60%, transparent 60%)`; return `linear-gradient(${r.map((c, i) => `${c} ${(i / r.length) * 100}% ${((i + 1) / r.length) * 100}%`).join(', ')})`; }
   function renderEnv() {
     $('#landCount').textContent = D.LANDER.length;

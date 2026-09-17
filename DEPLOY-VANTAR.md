@@ -1,9 +1,9 @@
 # Deploy väntar — koden är klar, men inte live
 
-**Senast uppdaterad:** 2026-09-17 09:27 (uppdrag #367, hemskarmsikon)
+**Senast uppdaterad:** 2026-09-17 09:31 (uppdrag #369, ljust/mörkt läge)
 
 ## Läget
-Allt i `main` till och med commit `cdbb809` (hemskarmsikon) är **committat och
+Allt i `main` till och med ljust/mörkt läge (#369) är **committat och
 pushat men inte utdeployat**. Live-sajten https://kalender-bradet.vercel.app kör
 fortfarande en ~1 dygn gammal version.
 
@@ -68,11 +68,18 @@ En enda lyckad deploy publicerar allt som står och väntar:
   `ikoner/` (192, 512, maskerbar 512), ritade av `tools/gor-ikoner.js`. Utan
   deployen blir en genväg på mobilens hemskärm fortfarande en suddig skärmbild.
 
+- **#369 ljust/mörkt läge** — appen följer nu telefonens `prefers-color-scheme`
+  i stället för att alltid vara mörk. Live-versionen är mörk dygnet runt tills
+  deployen går igenom.
+
 Försök 2026-09-17 09:26 (hand 1, uppdrag #368): nekad, samma
 `api-deployments-free-per-day`.
 Försök 2026-09-17 09:27 (hand 3, uppdrag #367): nekad, samma kod. De två
 försöken gick omedvetet om varandra — **två händer i samma projekt måste läsa
 den här filen precis före sitt försök**, inte när uppdraget börjar.
 Nästa försök tidigast 15:27, av EN hand.
+
+Hand 2 (uppdrag #369) läste filen 09:31 och **avstod från att försöka** — tredje
+försöket inom fem minuter är precis det bankande som håller fönstret stängt.
 
 Se även minnesfilen `vercel-100-deploys-per-dygn`.
