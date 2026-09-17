@@ -1,36 +1,62 @@
-# Deploy väntar
+# Deploy väntar — koden är klar, men inte live
 
-**Status 2026-09-17 07:25** — Årsstatistik-panelen (uppdrag #365) är byggd,
-verifierad och pushad till `main` (commit `9d1ea8a`), men **den är inte live**.
+**Senast uppdaterad:** 2026-09-17 07:30 (uppdrag #365, Årsstatistik)
 
-`XDG_DATA_HOME=C:/Users/PC/AppData/Roaming/xdg.data npx --yes vercel deploy --prod --yes`
-nekas med:
+## Läget
+Allt i `main` till och med commit `9d1ea8a` (Årsstatistik) är **committat och
+pushat men inte utdeployat**. Live-sajten https://kalender-bradet.vercel.app kör
+fortfarande en ~1 dygn gammal version.
 
+Kontroller som visar det:
+
+```sh
+curl -s https://kalender-bradet.vercel.app/ | grep -c 'openYear'          # ska bli >0
+curl -s https://kalender-bradet.vercel.app/js/app.js | grep -c -i 'nyårsafton'  # ska bli >0
 ```
-Resource is limited - try again in 24 hours
-(more than 100, code: "api-deployments-free-per-day")
+
+## Varför
+`vercel deploy --prod` nekas med
+`Resource is limited - try again in 24 hours (more than 100, code: "api-deployments-free-per-day")`.
+
+Det är Vercels **kontotak på 100 deploys per dygn för hela gratiskontot** — inte
+ett fel i det här projektet. Att bygga om, rensa `.vercel/` eller köra `--force`
+hjälper inte. `vercel list kalender-bradet` visar noll egna deploys senaste
+dygnet; projektet har alltså inte bränt kvoten själv.
+
+Mätt 2026-09-17 07:25 med `vercel list the-work-list`: 12 deployer 2 h tillbaka,
+6 timmen därpå, 2 senaste timmen. The Work List publicerar vid varje `start`,
+`note --shot` och `done`/`fail` och tar därför nästan varje lucka det rullande
+fönstret släpper.
+
+## Gör INTE
+- **Banka inte.** Varje nekat försök verkar hålla fönstret öppet — ett timvis
+  retry gör blockeringen permanent (bevisat i radcore och quiz-runner). ETT
+  försök per körning, sedan paus.
+- **Räkna inte med en push.** Projektet har **ingen Vercel-git-koppling** — alla
+  deployer i listan är CLI-deployer, så en push till GitHub utlöser ingenting.
+  Det finns ingen väg förbi utan CLI.
+- **Alias-vägen är stängd.** `vercel list kalender-bradet` visar bara deployer
+  som är 1 dygn gamla, alltså finns inget färskare READY-bygge att peka domänen
+  på med `vercel alias set`.
+- **Ingen uppgradering av Vercel-planen** — det kostar pengar och kräver Marcs ja.
+
+## Gör så här
+Ett försök, i projektmappen:
+
+```sh
+XDG_DATA_HOME=C:/Users/PC/AppData/Roaming/xdg.data npx --yes vercel@latest deploy --prod --yes
 ```
 
-Det är Vercels **kontotak** (100 deploys/dygn för hela kontot), inte ett fel i
-projektet. `vercel list kalender-bradet` visar noll egna deploys senaste dygnet
-— kalender-bradet har alltså inte bränt kvoten själv. `vercel list the-work-list`
-visade samma minut **7 produktionsdeploys senaste timmen**; The Work List
-publicerar vid varje `start`, `note --shot` och `done`/`fail` och hinner ta nästan
-varje lucka i det rullande fönstret.
+Går den igenom: verifiera med curl-raderna ovan och **radera den här filen**.
+Nekas den: lämna filen, försök igen tidigast om sex timmar.
 
-## Regler för nästa hand
+## Vad som kommer ut när den går igenom
+En enda lyckad deploy publicerar allt som står och väntar:
 
-- **Banka inte.** Varje nekat försök verkar hålla fönstret öppet. Ett försök per
-  körning, sedan paus.
-- Projektet har **ingen Vercel-git-koppling** (alla deploys i listan är
-  CLI-deploys), så en push till GitHub utlöser ingen deploy. Det finns alltså
-  ingen väg förbi utan CLI.
-- Ingen uppgradering av Vercel-planen — det kostar pengar och kräver Marcs ja.
+- **#365 Årsstatistik** — knappen 📊 Året / tangent `Å`: flest läkarbesök med
+  toppmånad, mest träning, längsta streak, längsta besöksrad, bästa månad,
+  månadsstaplar, typfördelning, årsbläddring med ‹ ›, samt konfetti + 75 poäng
+  på nyårsafton (en gång per år).
+- **#366** Flytta händelse med drag (dokumentation och test).
 
-## När det gått igenom
-
-Verifiera att funktionen faktiskt kom ut och radera den här filen:
-
-```
-curl -s https://kalender-bradet.vercel.app/ | grep -c 'openYear'   # ska bli 1
-```
+Se även minnesfilen `vercel-100-deploys-per-dygn`.
