@@ -358,7 +358,7 @@
     const t = D.dagensTips(); const n = D.TIPS.length;
     const rows = [];
     for (let i = 0; i < 8; i++) { const idx = ((t.nr - i) % n + n) % n; const d = new Date(); d.setDate(d.getDate() - i); rows.push(`<div class="tip"><div class="n">${i === 0 ? 'I dag' : i === 1 ? 'I går' : d.toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'short' })}</div>${esc(D.TIPS[idx])}</div>`); }
-    $('#tipList').innerHTML = rows.join('') + `<p class="small">${n} råd i rotation. Fler idéer om appen skrivs upp automatiskt på <a href="https://the-work-list.vercel.app/projects" style="color:var(--accent)">The Work List</a>.</p>`;
+    $('#tipList').innerHTML = rows.join('') + `<p class="small">${n} råd i rotation. Fler idéer om appen skrivs upp automatiskt på <a href="https://marcdshark666.github.io/projects" style="color:var(--accent)">The Work List</a>.</p>`;
   }
 
   // ------------------------------------------------------------ årsstatistik
