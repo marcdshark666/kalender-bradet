@@ -42,6 +42,24 @@ Det pekar på att Vercels GitHub-app inte har läsrättighet till just det här
 repot (appen kan vara installerad med "Only select repositories";
 `marcdshark666.github.io` finns med, `kalender-bradet` inte).
 
+## Pushtestet 18:05 — resultat
+En riktig commit pushades till `main` (613a2b8) kl 18:05 för att se om
+git-integrationen deployar av sig själv. **Ingen deploy utlöstes** — sex
+minuter senare visar `vercel list kalender-bradet` fortfarande bara de tre
+CLI-deployerna från 16/9, och `curl` på live-sajten hittar fortfarande inte
+`openYear`.
+
+Projektet *har* alltså git-kopplingen inställd (alias
+`kalender-bradet-git-main-…` finns, produktionsgren `main`), men **webhooken
+levererar inte**. Jämför med `jobbans-kandrswe`, som fick en git-triggad
+produktionsdeploy 17:57 samma kväll, och `the-work-list` som får en var
+tjugonde minut.
+
+Skillnaden ligger alltså inte i Vercel-projektets inställningar utan i att
+Vercels GitHub-app inte har läsrättighet till just det här repot. `vercel git
+connect` kan länka ett repo via Marcs GitHub-inloggning även när appen saknar
+åtkomst — därför svarar den "already connected" utan att något deployar.
+
 ## Så tar du det vidare
 1. **Marc (30 sekunder, i webbläsaren):** GitHub → Settings → Applications →
    Vercel → Configure → Repository access → lägg till `kalender-bradet` och
