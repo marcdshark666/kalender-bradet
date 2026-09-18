@@ -1,71 +1,52 @@
-# Deploy väntar — koden är klar, men inte live
+# Deploy väntar — LÖST 2026-09-18
 
-**Senast uppdaterad:** 2026-09-17 18:05 (körning 2026-09-17-1800)
+**Status:** klart. Allt i `main` är live på https://kalender-bradet.vercel.app.
+Den här filen sparas som historik över vad som faktiskt hände.
 
-## Läget
-Allt i `main` till och med årsstatistik (#365) och ljust/mörkt läge (#369) är
-**committat och pushat men inte utdeployat**. Live-sajten
-https://kalender-bradet.vercel.app kör fortfarande en ~2 dygn gammal version.
+## Facit
+`vercel list kalender-bradet` 2026-09-18 08:15 visar en produktionsdeploy som är
+**14 timmar gammal** (alltså kvällen 17/9, strax efter att den här filen skrevs) —
+utöver de tre CLI-deployerna från 16/9. Den deployen tog med både årsstatistiken
+(#365) och ljust/mörkt läge (#369).
 
-Kontroller som visar det:
+Kontroll som bevisar det (kör den här, inte de gamla raderna nedan):
 
 ```sh
-curl -s https://kalender-bradet.vercel.app/ | grep -c 'openYear'                 # ska bli >0
-curl -s https://kalender-bradet.vercel.app/js/app.js | grep -ci 'nyårsafton'     # ska bli >0
-curl -s https://kalender-bradet.vercel.app/css/app.css | grep -c 'prefers-color-scheme'  # ska bli >0
+curl -s https://kalender-bradet.vercel.app/ > /tmp/live.html
+diff index.html /tmp/live.html          # tom = live är exakt main
+curl -s https://kalender-bradet.vercel.app/js/app.js | diff js/app.js -
 ```
 
-## Varför — och vad som faktiskt är nytt 17/9 18:00
-`vercel deploy --prod` nekas med
-`Resource is limited - try again in 24 hours (more than 100, code: "api-deployments-free-per-day")`.
+2026-09-18 08:14: båda diffarna tomma. `index.html` 28 790 B och `js/app.js`
+44 001 B, byte för byte lika med `main` (7cde5f8).
 
-Tidigare händer antog att hela kontot var låst och satte klockslag (22:02) att
-vänta till. **Det stämmer inte.** Mätt 17/9 18:02:
+## Varför tidigare körningar trodde att det inte var deployat
+De gamla kontrollraderna var fel skrivna:
 
-- `vercel list the-work-list` visar lyckade produktionsdeployer 21, 31, 51 min
-  och 1–4 h tillbaka — kontot deployar alltså hela tiden.
-- `vercel inspect` på den senaste (dpl_2F9ga7HbS7phJ2LoPtmd1Yt1p65H) ger
-  `created 17:40:26`, exakt samma tidpunkt som `the-work-list/state.json`
-  `lastPublish`. The Work List publicerar till GitHub Pages-repot, och Vercels
-  **git-integration** deployar på pushen.
+```sh
+curl -s .../css/app.css | grep -c 'prefers-color-scheme'   # ← css/app.css finns inte
+```
 
-Slutsatsen: `api-deployments-free-per-day` gäller **CLI-/API-initierade**
-deployer. **Git-triggade deployer går igenom även när CLI-taket är fullt.**
+Projektet har ingen `css/`-mapp — all CSS ligger **inline i `index.html`**.
+`curl` på en 404-sida gav 0 träffar, och det lästes som "mörkt läge är inte ute".
+Samma miss upprepades i 25 respektive 9 försök. Jämför alltid hela filen mot live
+i stället för att grep:a på en gissad sökväg.
 
-## Vad som saknas för det här projektet
-`vercel git connect` svarar `marcdshark666/kalender-bradet is already connected`,
-men `vercel list kalender-bradet` visar bara **tre deployer, alla 2 dygn gamla
-och alla CLI-gjorda**. Ingen push till `main` har någonsin utlöst en deploy —
-inte heller pushen 16:02 idag.
+## Två fällor som är värda att komma ihåg
+1. **`api-deployments-free-per-day` gäller bara CLI/API-deployer.** Git-triggade
+   deployer går igenom även när CLI-taket är fullt. (Mätt 17/9 18:02.)
+2. **`No existing credentials found` betyder inte utloggad.** Token ligger i
+   `%APPDATA%\xdg.data\com.vercel.cli\auth.json` och hittas bara när
+   `XDG_DATA_HOME` är satt:
 
-Det pekar på att Vercels GitHub-app inte har läsrättighet till just det här
-repot (appen kan vara installerad med "Only select repositories";
-`marcdshark666.github.io` finns med, `kalender-bradet` inte).
+   ```sh
+   XDG_DATA_HOME="C:/Users/PC/AppData/Roaming/xdg.data" npx --yes vercel list kalender-bradet
+   ```
 
-## Pushtestet 18:05 — resultat
-En riktig commit pushades till `main` (613a2b8) kl 18:05 för att se om
-git-integrationen deployar av sig själv. **Ingen deploy utlöstes** — sex
-minuter senare visar `vercel list kalender-bradet` fortfarande bara de tre
-CLI-deployerna från 16/9, och `curl` på live-sajten hittar fortfarande inte
-`openYear`.
+   Utan den variabeln startar CLI:t en device-kod-inloggning och hänger.
 
-Projektet *har* alltså git-kopplingen inställd (alias
-`kalender-bradet-git-main-…` finns, produktionsgren `main`), men **webhooken
-levererar inte**. Jämför med `jobbans-kandrswe`, som fick en git-triggad
-produktionsdeploy 17:57 samma kväll, och `the-work-list` som får en var
-tjugonde minut.
-
-Skillnaden ligger alltså inte i Vercel-projektets inställningar utan i att
-Vercels GitHub-app inte har läsrättighet till just det här repot. `vercel git
-connect` kan länka ett repo via Marcs GitHub-inloggning även när appen saknar
-åtkomst — därför svarar den "already connected" utan att något deployar.
-
-## Så tar du det vidare
-1. **Marc (30 sekunder, i webbläsaren):** GitHub → Settings → Applications →
-   Vercel → Configure → Repository access → lägg till `kalender-bradet` och
-   `inbox-zero-hero`. Därefter deployar varje push av sig själv, oberoende av
-   CLI-taket — samma väg som The Work List redan använder.
-2. **Eller:** vänta tills CLI-taket rullar vidare och kör ETT försök:
-   `XDG_DATA_HOME="C:/Users/PC/AppData/Roaming/xdg.data" npx --yes vercel deploy --prod --yes`
-
-Ta bort den här filen när ändringen är live.
+## Kvar att göra
+Inget. Git-integrationen levererar fortfarande inte webhooks för det här repot
+(pushtestet 613a2b8 utlöste ingen deploy), så deploy måste tills vidare göras med
+`npx vercel deploy --prod --yes` och `XDG_DATA_HOME` satt. Vill Marc slippa det
+kan han ge Vercels GitHub-app läsrättighet till `marcdshark666/kalender-bradet`.
